@@ -1,0 +1,114 @@
+---
+title: Diving into Plotly with R
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(plotly)
+set.seed(100)
+```
+
+---
+
+![](logo.png)
+
+[http://plot.ly](http://plot.ly)
+
+---
+
+## Plot.ly
+
+- Data viz company. Trying to compete with likes of Tableau.
+- Web service with a JavaScript plotting library at heart
+- Cross platform interactive and editable charts
+    - Add basic interactivity with little overhead
+        - Great for exploration
+        - As supplementary content? Embedded in journal websites?
+    - plotly.js library open sourced late 2015
+    - Online editing, collaboration, dashboards etc.
+        - Excel online
+        - Many more esoteric features
+            - e.g. websockets
+    - Vector plots, can use pixels for better performance (WebGL)
+        - Can usually plot <1m 2d points without dramas
+    - Actively maintained client libraries for Python, R, Matlab & JS
+- Free version has limitations - no vector graphic export
+    - But vector graphics aren't interactive?!
+    - Student pricing 5$/mo
+
+---
+
+*Some plots are posted to the web for processing, but most plotting is now implemented in the client, and inside RStudio everything is done offline*
+
+---
+
+## Interactive scatter plots
+``` {r}
+head(diamonds) # example dataset
+```
+
+#### Basic 2d scatter
+```{r scatter1, echo=TRUE, message=FALSE}
+d <- diamonds[sample(nrow(diamonds), 1000), ]
+plot_ly(d, x = ~carat, y = ~price)
+```
+
+#### 2d scatter with marker size, colour and custom labels
+```{r scatter2, echo=TRUE, message=FALSE}
+d <- diamonds[sample(nrow(diamonds), 1000), ]
+plot_ly(d,
+        x = ~carat,
+        y = ~price,
+        color = ~carat,
+        size = ~carat,
+        text = ~paste("Price: ", price, '$<br>Cut:', cut))
+# Lots of information easily accessible, not overwhelming
+```
+
+#### As above, but using plotly_POST to share charts (requires a plot.ly account)
+```
+d <- diamonds[sample(nrow(diamonds), 1000), ]
+c <- plot_ly(d,
+             x = ~carat,
+             y = ~price,
+             color = ~carat,
+             size = ~carat,
+             text = ~paste("Price: ", price, '$<br>Cut:', cut))
+
+chart_link = plotly_POST(c, filename="scatterer")
+chart_link # returns URL of web chart
+```
+
+## Box and whisker
+``` {r, message=FALSE}
+plot_ly(diamonds, x = ~price, color = ~cut, type = "box")
+```
+
+## Bubble plots
+
+## ggplotly()
+- Free interactivity for ggplot()  
+``` {r, message=FALSE}
+p <- ggplot(data = d, aes(x = carat, y = price)) +
+     geom_point(aes(text = paste("Clarity:", clarity))) +
+     geom_smooth(aes(colour = cut, fill = cut)) + facet_wrap(~ cut)
+
+ggplotly(p)
+```
+
+
+
+## Chart type inference
+- Instead of defaulting to a scatter trace, plot_ly() infers a sensible trace type based on provided data.
+- e.g. if we supply a discrete variable to x (or y), we get a vertical (or horizontal) bar chart:
+``` {r, message=FALSE}
+subplot(
+  plot_ly(diamonds, y = ~cut, color = ~clarity),
+  plot_ly(diamonds, x = ~cut, color = ~clarity),
+  margin = 0.05
+) %>% hide_legend() 
+```
+Or send discrete variables to both X and Y:
+``` {r, message=FALSE}
+plot_ly(diamonds, x = ~cut, y = ~clarity)
+```
